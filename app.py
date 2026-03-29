@@ -1,5 +1,11 @@
 import customtkinter as ctk
 import json
+import os, sys
+
+def resource_path(rel_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, rel_path)
+    return os.path.join(os.path.abspath("."), rel_path)
 
 ctk.set_appearance_mode("System")
 
@@ -12,7 +18,7 @@ class App(ctk.CTk):
         self.row_widgets = []
         
         self.title("External Disks Manager")
-        self.iconbitmap("icon.ico")
+        self.iconbitmap(resource_path("icon.ico"))
         self.geometry("950x500")
         self.resizable(False, False)
 
@@ -84,7 +90,7 @@ class App(ctk.CTk):
         description = ctk.CTkLabel(row, text=rowObj["description"], corner_radius=0, width=400)
         description.pack(side="left")
         if(rowObj["isEncrypted"]):
-            enc = ctk.CTkLabel(row, text=f"Ecrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0, fg_color="#3A2E50", text_color="#C8A8F0")
+            enc = ctk.CTkLabel(row, text=f"Encrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0, fg_color="#3A2E50", text_color="#C8A8F0")
             enc.pack(side="left")
         else:
             enc = ctk.CTkLabel(row, text="Unlocked", width=148, corner_radius=0, fg_color="#2A3040", text_color="#90A8C8")
