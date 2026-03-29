@@ -18,7 +18,7 @@ class App(ctk.CTk):
         self.row_widgets = []
         
         self.title("External Disks Manager")
-        self.iconbitmap(resource_path("icon.ico"))
+        #self.iconbitmap(resource_path("icon.ico")) #icon not available
         self.geometry("950x500")
         self.resizable(False, False)
 
