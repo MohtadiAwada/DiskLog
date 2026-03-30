@@ -1,7 +1,6 @@
 import customtkinter as ctk
 import json
 import os, sys
-import subprocess
 
 def resource_path(rel_path):
     if hasattr(sys, '_MEIPASS'):
@@ -17,7 +16,6 @@ ctk.set_appearance_mode("System")
 class App(ctk.CTk):
     JSON_FILE = external_path("data.json")
     CONFIG_FILE = external_path("config.json")
-    JSON_DATA = []
     def __init__(self):
         super().__init__()
         self.selected_index = None
@@ -42,12 +40,11 @@ class App(ctk.CTk):
         self.toolbar = ctk.CTkFrame(self.body, corner_radius=0, width=24)
         self.toolbar.pack(side="left", fill="both", expand=False)
         self.toolbar.pack_propagate(False)
-        self.tb_edt_rfrsh = ctk.CTkButton(self.toolbar, corner_radius=0, text="↻", height=24, command=self.refresh)
-        self.tb_edt_rfrsh.pack(side="top", fill="x")
+        self.tb_rfrsh_btn = ctk.CTkButton(self.toolbar, corner_radius=0, text="↻", height=24, command=self.refresh_handler)
         self.tb_dlt_btn = ctk.CTkButton(self.toolbar, corner_radius=0, text="✕", height=24, command=self.delete)
-        self.tb_dlt_btn.pack(side="top", fill="x")
         self.tb_edt_btn = ctk.CTkButton(self.toolbar, corner_radius=0, text="✎", height=24)
-        self.tb_edt_btn.pack(side="top", fill="x")
+        for e in [self.tb_rfrsh_btn, self.tb_dlt_btn, self.tb_edt_btn]:
+            e.pack(side="top")
 
         self.main = ctk.CTkFrame(self.body, corner_radius=0)
         self.main.pack(side="left", fill="both", expand=True)
@@ -87,7 +84,7 @@ class App(ctk.CTk):
         self.cnfg_pnl_mn_UI_lbl.grid(row=0, column=0, columnspan=2, sticky="we")
         self.cnfg_pnl_mn_UI_thm_lbl = ctk.CTkLabel(self.cnfg_pnl_mn, text="Theme:")
         self.cnfg_pnl_mn_UI_thm_lbl.grid(row=1, column=0, sticky="w", padx=[10, 0], pady=10)
-        self.cnfg_pnl_mn_UI_thm_cb = ctk.CTkComboBox(self.cnfg_pnl_mn, corner_radius=0, values=self.get_themes(), state="readonly")
+        self.cnfg_pnl_mn_UI_thm_cb = ctk.CTkComboBox(self.cnfg_pnl_mn, corner_radius=0, values=[f.replace(".json", "") for f in os.listdir("themes") if f.endswith(".json")], state="readonly")
         self.cnfg_pnl_mn_UI_thm_cb.grid(row=1, column=1, sticky="w", padx=[10, 0], pady=10)
         self.cnfg_pnl_btns = ctk.CTkFrame(self.config_panel, corner_radius=0)
         self.cnfg_pnl_btns.pack(side="top", fill="x")
@@ -98,13 +95,18 @@ class App(ctk.CTk):
         self.load_config()
         self.load_theme()
         self.apply_theme()
-
+    
+    #data manipulation
     def load_config(self):
         with open(self.CONFIG_FILE, "r") as f:
             self.config = json.load(f)
         self.cnfg_pnl_mn_UI_thm_cb.set(self.config["theme"])
         self.CONFIG_CHANGE = False
-
+    def change_config(self):
+        nTheme = self.cnfg_pnl_mn_UI_thm_cb.get()
+        if nTheme != self.config["theme"]:
+            self.CONFIG_CHANGE = True
+            self.config["theme"] = nTheme
     def save_config(self):
         self.change_config()
         with open(self.CONFIG_FILE, "w") as f:
@@ -116,17 +118,57 @@ class App(ctk.CTk):
             self.config_panel.place_forget()
         else:
             self.config_panel.place_forget()
-
-    def change_config(self):
-        nTheme = self.cnfg_pnl_mn_UI_thm_cb.get()
-        if nTheme != self.config["theme"]:
-            self.CONFIG_CHANGE = True
-            self.config["theme"] = nTheme
-
+    def get_data(self):
+        try:
+            with open(self.JSON_FILE, "r") as file:
+                data = json.load(file)
+            self.DATA = data
+        except FileNotFoundError:
+            self.DATA = []
+    def update_data(self):
+        with open(self.JSON_FILE, 'w') as f:
+            json.dump(self.DATA, f, indent=4)
     def load_theme(self):
         with open(external_path(f"themes/{self.config["theme"]}.json")) as f:
             self.theme = json.load(f)
-
+    #doc manepulation
+    def construct_row(self, rowObj, index):
+        click = lambda e, i=index: self.handle_select(i)
+        row = ctk.CTkFrame(self.table, corner_radius=0)
+        row.pack(side="top")
+        id = ctk.CTkLabel(row, text=rowObj["id"], corner_radius=0, width=48)
+        ttype = ctk.CTkLabel(row, text=rowObj["type"], corner_radius=0, width=150)
+        title = ctk.CTkLabel(row, text=rowObj["title"], corner_radius=0, width=180)
+        description = ctk.CTkLabel(row, text=rowObj["description"], corner_radius=0, width=400)
+        if(rowObj["isEncrypted"]):
+            enc = ctk.CTkLabel(row, text=f"Encrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0)
+        else:
+            enc = ctk.CTkLabel(row, text="Unlocked", width=148, corner_radius=0,)
+        for e in [id, ttype, title, description, enc]:
+            e.pack(side="left")
+            e.bind("<Button-1>", click)
+        self.row_widgets.append(row)
+    def construct_table(self):
+        self.get_data()
+        for element in self.table.winfo_children():
+            element.destroy()
+        table_head = ctk.CTkFrame(self.table, corner_radius=0)
+        table_head.pack(fill="x")
+        table_head_id = ctk.CTkLabel(table_head, corner_radius=0, text="ID", width=48)
+        table_head_id.pack(side="left")
+        table_head_type = ctk.CTkLabel(table_head, corner_radius=0, text="Type", width=150)
+        table_head_type.pack(side="left")
+        table_head_title = ctk.CTkLabel(table_head, corner_radius=0, text="Title", width=180)
+        table_head_title.pack(side="left")
+        table_head_dscrptn = ctk.CTkLabel(table_head, corner_radius=0, text="Description", width=400)
+        table_head_dscrptn.pack(side="left")
+        table_head_state = ctk.CTkLabel(table_head, corner_radius=0, width=148, text="State")
+        table_head_state.pack(side="left")
+        data = self.DATA
+        self.row_widgets = []
+        self.selected_index = None
+        for i, rowObj in enumerate(data):
+            self.construct_row(rowObj, i)
     def apply_theme(self):
         self.configure(fg_color=self.theme["main"]["fg-color"])
         self.header.configure(fg_color=self.theme["header"]["fg-color"])
@@ -147,7 +189,7 @@ class App(ctk.CTk):
                 e.configure(fg_color=color)
                 for k, chld in enumerate(e.winfo_children()):
                     if k == len(e.winfo_children())-1:
-                        if self.JSON_DATA[i-1]["isEncrypted"]:
+                        if self.DATA[i-1]["isEncrypted"]:
                             chld.configure(fg_color=self.theme["table"]["row-badge-fg-color-true"], text_color=self.theme["table"]["row-badge-text-color-true"])
                         else:
                             chld.configure(fg_color=self.theme["table"]["row-badge-fg-color-false"], text_color=self.theme["table"]["row-badge-text-color-false"])
@@ -171,77 +213,15 @@ class App(ctk.CTk):
         self.cnfg_pnl_mn_UI_thm_lbl.configure(text_color=self.theme["config-panel"]["label-text-color"])
         self.cnfg_pnl_mn_UI_thm_cb.configure(fg_color=self.theme["config-panel"]["input-fg-color"], border_color=self.theme["config-panel"]["input-border-color"], button_color=self.theme["config-panel"]["input-button-color"], text_color=self.theme["config-panel"]["input-text-color"])
         self.cnfg_pnl_sv.configure(fg_color=self.theme["config-panel"]["button-fg-color"], hover_color=self.theme["config-panel"]["button-hover-color"], text_color=self.theme["config-panel"]["button-text-color"])
-
+    #event handle
     def change_handler(self):
         if self.form_inpt_isencrptd.get():
             self.form_inpt_pswrdprtcl.pack(side="left", padx=[0, 10], pady=10)
         else:
             self.form_inpt_pswrdprtcl.pack_forget()
-    
-    def construct_row(self, rowObj, index):
-        row = ctk.CTkFrame(self.table, corner_radius=0)
-        row.pack(fill="x")
-        id = ctk.CTkLabel(row, text=rowObj["id"], corner_radius=0, width=48)
-        id.pack(side="left")
-        ttype = ctk.CTkLabel(row, text=rowObj["type"], corner_radius=0, width=150)
-        ttype.pack(side="left")
-        title = ctk.CTkLabel(row, text=rowObj["title"], corner_radius=0, width=180)
-        title.pack(side="left")
-        description = ctk.CTkLabel(row, text=rowObj["description"], corner_radius=0, width=400)
-        description.pack(side="left")
-        if(rowObj["isEncrypted"]):
-            enc = ctk.CTkLabel(row, text=f"Encrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0)
-            enc.pack(side="left")
-        else:
-            enc = ctk.CTkLabel(row, text="Unlocked", width=148, corner_radius=0,)
-            enc.pack(side="left")
-        self.row_widgets.append(row)
-        click = lambda e, i=index: self.handle_select(i)
-        id.bind("<Button-1>", click)
-        ttype.bind("<Button-1>", click)
-        title.bind("<Button-1>", click)
-        description.bind("<Button-1>", click)
-        enc.bind("<Button-1>", click)
-
-    def refresh(self):
+    def refresh_handler(self):
         self.construct_table()
         self.apply_theme()
-    
-    def get_data(self):
-        try:
-            with open(self.JSON_FILE, "r") as file:
-                data = json.load(file)
-            self.JSON_DATA = data
-            return data
-        except FileNotFoundError:
-            return
-
-    def update_data(self):
-        with open(self.JSON_FILE, 'w') as f:
-            json.dump(self.JSON_DATA, f, indent=4)
-    
-    def construct_table(self):
-        self.get_data()
-        for element in self.table.winfo_children():
-            element.destroy()
-        table_head = ctk.CTkFrame(self.table, corner_radius=0)
-        table_head.pack(fill="x")
-        table_head_id = ctk.CTkLabel(table_head, corner_radius=0, text="ID", width=48)
-        table_head_id.pack(side="left")
-        table_head_type = ctk.CTkLabel(table_head, corner_radius=0, text="Type", width=150)
-        table_head_type.pack(side="left")
-        table_head_title = ctk.CTkLabel(table_head, corner_radius=0, text="Title", width=180)
-        table_head_title.pack(side="left")
-        table_head_dscrptn = ctk.CTkLabel(table_head, corner_radius=0, text="Description", width=400)
-        table_head_dscrptn.pack(side="left")
-        table_head_state = ctk.CTkLabel(table_head, corner_radius=0, width=148, text="State")
-        table_head_state.pack(side="left")
-        data = self.JSON_DATA
-        self.row_widgets = []
-        self.selected_index = None
-        for i, rowObj in enumerate(data):
-            self.construct_row(rowObj, i)
-    
     def submit_handler(self):
         obj = {}
         obj["id"] = self.form_inpt_id.get()
@@ -257,10 +237,9 @@ class App(ctk.CTk):
             obj["isEncrypted"] = False
             obj["passwordProtocol"] = ""
         self.clear()
-        self.JSON_DATA.append(obj)
+        self.DATA.append(obj)
         self.update_data()
-        self.refresh()
-
+        self.refresh_handler()
     def clear(self):
         self.form_inpt_id.delete(0, "end")
         self.form_inpt_id.configure(placeholder_text="ID")
@@ -272,29 +251,23 @@ class App(ctk.CTk):
         self.form_inpt_isencrptd.deselect()
         self.change_handler()
         self.form_inpt_pswrdprtcl.set("Password Protocol")
-
     def handle_select(self, index):
         if self.selected_index is not None:
             color = self.theme["table"]["row-fg-color-1"] if self.selected_index%2==0 else self.theme["table"]["row-fg-color-2"]
             self.row_widgets[self.selected_index].configure(fg_color=color)
         self.selected_index = index
         self.row_widgets[index].configure(fg_color=self.theme["table"]["row-fg-color-selected"])
-
     def delete(self):
         if self.selected_index is None:
             return
-        del self.JSON_DATA[self.selected_index]
+        del self.DATA[self.selected_index]
         self.update_data()
-        self.refresh()
-
+        self.refresh_handler()
     def toggle_config_panel(self):
         if self.config_panel.winfo_ismapped():
             self.config_panel.place_forget()
         else:
             self.config_panel.place(x=0, y=0, relwidth=1, relheight=1)
-
-    def get_themes(self):
-        return [f.replace(".json", "") for f in os.listdir("themes") if f.endswith(".json")]
 
 if __name__ == "__main__":
     app = App()
