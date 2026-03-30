@@ -110,13 +110,12 @@ class App(ctk.CTk):
         with open(self.CONFIG_FILE, "w") as f:
             json.dump(self.config, f, indent=4)
         if self.CONFIG_CHANGE:
-            self.restart()
+            self.load_config()
+            self.load_theme()
+            self.apply_theme()
+            self.config_panel.place_forget()
         else:
             self.config_panel.place_forget()
-
-    def restart(self):
-        self.destroy()
-        subprocess.Popen([sys.executable, os.path.abspath("app.py")])
 
     def change_config(self):
         nTheme = self.cnfg_pnl_mn_UI_thm_cb.get()
