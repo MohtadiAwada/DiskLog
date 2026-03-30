@@ -1,0 +1,75 @@
+{
+    "name": "Dusk",
+    "header": {
+        "fg-color": "#1A1A3A",
+        "text-color": "#C9C9F0"
+    },
+    "toolbar": {
+        "fg-color": "#1A1A35",
+        "tool-fg-color": "transparent",
+        "tool-hover-color": "#28285A",
+        "tool-inner-color": "#7A7AB8"
+    },
+    "main": {
+        "fg-color": "#16163A",
+        "title-fg-color": "#252560"
+    },
+    "table": {
+        "fg-color": "transparent",
+        "head-fg-color": "#252560",
+        "head-text-color": "#8080C0",
+        "row-fg-color-1": "#1A1A45",
+        "row-fg-color-2": "#1E1E4A",
+        "row-fg-color-selected": "#2F2F7A",
+        "row-text-color": "#D0D0F0",
+        "row-badge-fg-color-true": "#2A2A60",
+        "row-badge-text-color-true": "#A8A8F8",
+        "row-badge-fg-color-false": "#1E2A40",
+        "row-badge-text-color-false": "#80A8C8"
+    },
+    "form": {
+        "fg-color": "#1A1A40",
+        "input": {
+            "fg-color": "#22224A",
+            "border-color": "#38387A",
+            "text-color": "#D0D0F0",
+            "placeholder-color": "#58589A"
+        },
+        "checkbox": {
+            "fg-color": "#4A4AB0",
+            "hover-color": "#4A4AB0",
+            "border-color": "#38387A",
+            "text-color": "#B0B0E0"
+        },
+        "combobox": {
+            "fg-color": "#22224A",
+            "border-color": "#38387A",
+            "button-color": "#2E2E60",
+            "text-color": "#D0D0F0"
+        },
+        "button": {
+            "primary-fg-color": "#3A3AB0",
+            "primary-hover-color": "#4A4AC0",
+            "primary-text-color": "#FFFFFF",
+            "secondary-fg-color": "#28285A",
+            "secondary-hover-color": "#333368",
+            "secondary-text-color": "#B0B0E0"
+        }
+    },
+    "config-panel": {
+        "fg-color": "#13133A",
+        "open-fg-color": "transparent",
+        "open-hover-color": "#28285A",
+        "open-inner-color": "#7A7AB8",
+        "title-fg-color": "#252560",
+        "title-text-color": "#9090D8",
+        "label-text-color": "#8080C0",
+        "input-fg-color": "#22224A",
+        "input-border-color": "#38387A",
+        "input-button-color": "#2E2E60",
+        "input-text-color": "#D0D0F0",
+        "button-fg-color": "#3A3AB0",
+        "button-hover-color": "#4A4AC0",
+        "button-text-color": "#FFFFFF"
+    }
+}

@@ -205,10 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+/dist
 data.json
-dist/**
-!dist/External-Disks-Manager.exe
-!dist/icon.ico
 External-Disks-Manager.spec
 untitled.af
 Untitled.png
