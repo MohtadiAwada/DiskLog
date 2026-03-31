@@ -1,4 +1,28 @@
 {
     "theme": "Midnight",
-    "password-protocols": []
+    "form": [
+        {
+            "title": "ID",
+            "type": "small entry"
+        },
+        {
+            "title": "Title",
+            "type": "medium entry"
+        },
+        {
+            "title": "Description",
+            "type": "large entry"
+        },
+        {
+            "title": "Type",
+            "type": "select",
+            "values": [
+                "HDD",
+                "SSD",
+                "NVMe",
+                "Flash Drive",
+                "Memory Card"
+            ]
+        }
+    ]
 }

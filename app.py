@@ -16,12 +16,6 @@ ctk.set_appearance_mode("System")
 class App(ctk.CTk):
     JSON_FILE = external_path("data.json")
     CONFIG_FILE = external_path("config.json")
-    test = [
-        {"type": "small entry"},
-        {"type": "medium entry"},
-        {"type": "large entry"},
-        {"type": "select"}
-    ]
     def __init__(self):
         super().__init__()
         self.selected_index = None
@@ -32,6 +26,8 @@ class App(ctk.CTk):
         self.geometry("950x500")
         self.resizable(False, False)
 
+        self.load_config()
+        
         self.header = ctk.CTkFrame(self, height=24, corner_radius=0)
         self.header.pack(side="top", fill="x")
         self.header.pack_propagate(False)
@@ -54,34 +50,10 @@ class App(ctk.CTk):
 
         self.main = ctk.CTkFrame(self.body, corner_radius=0)
         self.main.pack(side="left", fill="both", expand=True)
-
         self.table = ctk.CTkFrame(self.main, corner_radius=0)
         self.table.pack(fill="both", expand=True)
-
         self.form = ctk.CTkFrame(self.main, corner_radius=0)
         self.form.pack(side="bottom", fill="x")
-        self.construct_form(self.test, self.form)
-        """self.form_inpt = ctk.CTkFrame(self.form, corner_radius=0)
-        self.form_inpt.pack(side="top", fill="x")
-        self.form_inpt_id = ctk.CTkEntry(self.form_inpt, corner_radius=0, width=48, placeholder_text="ID")
-        self.form_inpt_id.pack(side="left", padx=[10, 0], pady=10)
-        self.form_inpt_ttl = ctk.CTkEntry(self.form_inpt, corner_radius=0, width=180, placeholder_text="Title")
-        self.form_inpt_ttl.pack(side="left", padx=[10, 0], pady=10)
-        self.form_inpt_dscrptn = ctk.CTkEntry(self.form_inpt, corner_radius=0, placeholder_text="Description")
-        self.form_inpt_dscrptn.pack(side="left", fill="both", expand=True, padx=[10, 10], pady=10)
-        self.form_inpt_type = ctk.CTkComboBox(self.form_inpt, corner_radius=0, values=["HDD", "SSD", "NVMe", "Flash Drive", "Memory Card"], state="readonly", width=120)
-        self.form_inpt_type.set("Type")
-        self.form_inpt_type.pack(side="left", padx=[0, 10], pady=10)
-        self.form_inpt_isencrptd = ctk.CTkCheckBox(self.form_inpt, corner_radius=0, text="Encrypted", command=self.change_handler)
-        self.form_inpt_isencrptd.pack(side="left", padx=[0, 10], pady=10)
-        self.form_inpt_pswrdprtcl = ctk.CTkComboBox(self.form_inpt, corner_radius=0, values=["Defualt", "None"], state="readonly", width=144)
-        self.form_inpt_pswrdprtcl.set("Password Protocol")
-        self.form_btn = ctk.CTkFrame(self.form, corner_radius=0)
-        self.form_btn.pack(side="top", fill="x")
-        self.form_btn_sv = ctk.CTkButton(self.form_btn, corner_radius=0, text="save", command=self.submit_handler)
-        self.form_btn_sv.pack(side="left", fill="both", expand=True, padx=[10, 0], pady=[0, 10])
-        self.form_btn_clr = ctk.CTkButton(self.form_btn, corner_radius=0, text="clear", command=self.clear_handler)
-        self.form_btn_clr.pack(side="left", fill="both", expand=True, padx=[10, 10], pady=[0, 10])"""
 
         self.config_panel = ctk.CTkFrame(self.body, corner_radius=0)
         self.cnfg_pnl_mn = ctk.CTkFrame(self.config_panel, corner_radius=0)
@@ -99,16 +71,13 @@ class App(ctk.CTk):
         self.cnfg_pnl_sv.pack(side="right", padx=10, pady=10)
 
         self.construct_table()
-        self.load_config()
-        self.load_theme()
-        #self.apply_theme()
-    
+        self.apply_config()    
     #data manipulation
     def load_config(self):
         with open(self.CONFIG_FILE, "r") as f:
             self.config = json.load(f)
-        self.cnfg_pnl_mn_UI_thm_cb.set(self.config["theme"])
         self.CONFIG_CHANGE = False
+        self.load_theme()
     def change_config(self):
         nTheme = self.cnfg_pnl_mn_UI_thm_cb.get()
         if nTheme != self.config["theme"]:
@@ -121,8 +90,12 @@ class App(ctk.CTk):
         if self.CONFIG_CHANGE:
             self.load_config()
             self.load_theme()
-            self.apply_theme()
+            self.apply_theme(self.theme)
         self.config_panel.place_forget()
+    def apply_config(self):
+        self.cnfg_pnl_mn_UI_thm_cb.set(self.config["theme"])
+        self.construct_form(self.config["form"], self.form)
+        self.apply_theme(self.theme)
     def get_data(self):
         try:
             with open(self.JSON_FILE, "r") as file:
@@ -172,69 +145,76 @@ class App(ctk.CTk):
             construct_row(rowObj, i)
     def construct_form(self, input_Objs:list, form:ctk.CTkFrame):
         inputs = ctk.CTkFrame(form)
-        inputs.pack(fill="x")
+        inputs.pack(fill="x", padx=[0, 12], pady=[12, 12])
         for obj in input_Objs:
             match obj["type"]:
                 case "small entry":
-                    inpt = ctk.CTkEntry(inputs, width=60)
+                    inpt = ctk.CTkEntry(inputs, width=60, placeholder_text=obj["title"])
                 case "medium entry":
-                    inpt = ctk.CTkEntry(inputs, width=144)
+                    inpt = ctk.CTkEntry(inputs, width=144, placeholder_text=obj["title"])
                 case "large entry":
-                    inpt = ctk.CTkEntry(inputs)
-                    inpt.pack(side="left", fill="both", expand=True)
+                    inpt = ctk.CTkEntry(inputs, placeholder_text=obj["title"])
+                    inpt.pack(side="left", fill="both", expand=True, padx=[12, 0])
                     continue
                 case "select":
-                    inpt = ctk.CTkComboBox(inputs, width=144)
+                    inpt = ctk.CTkComboBox(inputs, width=144, values=obj["values"])
+                    inpt.set(obj["title"])
                 case _:
                     continue
-            inpt.pack(side="left")
+            inpt.pack(side="left", padx=[12, 0])
         buttons = ctk.CTkFrame(form)
-        save_button = ctk.CTkButton(buttons)
-        clear_button = ctk.CTkButton(buttons)
-    def apply_theme(self):
-        self.configure(fg_color=self.theme["main"]["fg-color"])
-        self.header.configure(fg_color=self.theme["header"]["fg-color"])
-        self.title.configure(text_color=self.theme["header"]["text-color"])
-        self.body.configure(fg_color=self.theme["main"]["fg-color"])
-        self.toolbar.configure(fg_color=self.theme["toolbar"]["fg-color"])
+        buttons.pack(fill="x", padx=[0, 12], pady=[0, 12])
+        save_button = ctk.CTkButton(buttons, text="save")
+        clear_button = ctk.CTkButton(buttons, text="clear")
+        for btn in [save_button, clear_button]:
+            btn.pack(side="left", padx=[12, 0], fill="both", expand=True)
+    def apply_theme(self, theme:dict):
+        self.configure(fg_color=theme["main"]["fg-color"])
+        self.header.configure(fg_color=theme["header"]["fg-color"])
+        self.title.configure(text_color=theme["header"]["text-color"])
+        self.body.configure(fg_color=theme["main"]["fg-color"])
+        self.toolbar.configure(fg_color=theme["toolbar"]["fg-color"])
         for tool in self.toolbar.winfo_children():
-            tool.configure(fg_color=self.theme["toolbar"]["tool-fg-color"], hover_color=self.theme["toolbar"]["tool-hover-color"], text_color=self.theme["toolbar"]["tool-inner-color"])
-        self.main.configure(fg_color=self.theme["main"]["fg-color"])
-        self.table.configure(fg_color=self.theme["table"]["fg-color"])
+            tool.configure(fg_color=theme["toolbar"]["tool-fg-color"], hover_color=theme["toolbar"]["tool-hover-color"], text_color=theme["toolbar"]["tool-inner-color"])
+        self.main.configure(fg_color=theme["main"]["fg-color"])
+        self.table.configure(fg_color=theme["table"]["fg-color"])
         for i, e in enumerate(self.table.winfo_children()):
             if i == 0:
-                e.configure(fg_color=self.theme["table"]["head-fg-color"])
+                e.configure(fg_color=theme["table"]["head-fg-color"])
                 for chld in e.winfo_children():
-                    chld.configure(text_color=self.theme["table"]["head-text-color"])
+                    chld.configure(text_color=theme["table"]["head-text-color"])
             else:
-                color = self.theme["table"]["row-fg-color-2"] if i%2==0 else self.theme["table"]["row-fg-color-1"]
+                color = theme["table"]["row-fg-color-2"] if i%2==0 else theme["table"]["row-fg-color-1"]
                 e.configure(fg_color=color)
                 for k, chld in enumerate(e.winfo_children()):
                     if k == len(e.winfo_children())-1:
                         if self.DATA[i-1]["isEncrypted"]:
-                            chld.configure(fg_color=self.theme["table"]["row-badge-fg-color-true"], text_color=self.theme["table"]["row-badge-text-color-true"])
+                            chld.configure(fg_color=theme["table"]["row-badge-fg-color-true"], text_color=theme["table"]["row-badge-text-color-true"])
                         else:
-                            chld.configure(fg_color=self.theme["table"]["row-badge-fg-color-false"], text_color=self.theme["table"]["row-badge-text-color-false"])
+                            chld.configure(fg_color=theme["table"]["row-badge-fg-color-false"], text_color=theme["table"]["row-badge-text-color-false"])
                     else:
-                        chld.configure(text_color=self.theme["table"]["row-text-color"])
-        self.form.configure(fg_color=self.theme["form"]["fg-color"])
-        self.form_inpt.configure(fg_color="transparent")
-        self.form_btn.configure(fg_color="transparent")
-        for e in [self.form_inpt_id, self.form_inpt_ttl, self.form_inpt_dscrptn]:
-            e.configure(fg_color=self.theme["form"]["input"]["fg-color"], border_color=self.theme["form"]["input"]["border-color"], text_color=self.theme["form"]["input"]["text-color"], placeholder_text_color=self.theme["form"]["input"]["placeholder-color"])
-        for e in [self.form_inpt_type, self.form_inpt_pswrdprtcl]:
-            e.configure(fg_color=self.theme["form"]["combobox"]["fg-color"], border_color=self.theme["form"]["combobox"]["border-color"], button_color=self.theme["form"]["combobox"]["button-color"], text_color=self.theme["form"]["combobox"]["text-color"])
-        self.form_inpt_isencrptd.configure(fg_color=self.theme["form"]["checkbox"]["fg-color"], hover_color=self.theme["form"]["checkbox"]["hover-color"], border_color=self.theme["form"]["checkbox"]["border-color"], text_color=self.theme["form"]["checkbox"]["text-color"])
-        self.form_btn_sv.configure(fg_color=self.theme["form"]["button"]["primary-fg-color"], hover_color=self.theme["form"]["button"]["primary-hover-color"], text_color=self.theme["form"]["button"]["primary-text-color"])
-        self.form_btn_clr.configure(fg_color=self.theme["form"]["button"]["secondary-fg-color"], hover_color=self.theme["form"]["button"]["secondary-hover-color"], text_color=self.theme["form"]["button"]["secondary-text-color"])
-        self.config_btn.configure(fg_color=self.theme["config-panel"]["open-fg-color"], hover_color=self.theme["config-panel"]["open-hover-color"], text_color=self.theme["config-panel"]["open-inner-color"])
-        self.config_panel.configure(fg_color=self.theme["config-panel"]["fg-color"])
+                        chld.configure(text_color=theme["table"]["row-text-color"])
+        self.form.configure(fg_color=theme["form"]["fg-color"])
+        for section in self.form.winfo_children():
+            section.configure(fg_color="transparent")
+            for element in section.winfo_children():
+                if isinstance(element, ctk.CTkEntry):
+                    element.configure(fg_color=theme["form"]["input"]["fg-color"], border_color=theme["form"]["input"]["border-color"], text_color=theme["form"]["input"]["text-color"])
+                elif isinstance(element, ctk.CTkComboBox):
+                    element.configure(fg_color=theme["form"]["combobox"]["fg-color"], border_color=theme["form"]["combobox"]["border-color"], button_color=theme["form"]["combobox"]["button-color"], text_color=theme["form"]["combobox"]["text-color"])
+                elif isinstance(element, ctk.CTkButton):
+                    if element.cget("text") == "save":
+                        element.configure(fg_color=theme["form"]["button"]["primary-fg-color"], hover_color=theme["form"]["button"]["primary-hover-color"], text_color=theme["form"]["button"]["primary-text-color"])
+                    else:
+                        element.configure(fg_color=theme["form"]["button"]["secondary-fg-color"], hover_color=theme["form"]["button"]["secondary-hover-color"], text_color=theme["form"]["button"]["secondary-text-color"])
+        self.config_btn.configure(fg_color=theme["config-panel"]["open-fg-color"], hover_color=theme["config-panel"]["open-hover-color"], text_color=theme["config-panel"]["open-inner-color"])
+        self.config_panel.configure(fg_color=theme["config-panel"]["fg-color"])
         self.cnfg_pnl_mn.configure(fg_color="transparent")
         self.cnfg_pnl_btns.configure(fg_color="transparent")
-        self.cnfg_pnl_mn_UI_lbl.configure(fg_color=self.theme["config-panel"]["title-fg-color"], text_color=self.theme["config-panel"]["title-text-color"])
-        self.cnfg_pnl_mn_UI_thm_lbl.configure(text_color=self.theme["config-panel"]["label-text-color"])
-        self.cnfg_pnl_mn_UI_thm_cb.configure(fg_color=self.theme["config-panel"]["input-fg-color"], border_color=self.theme["config-panel"]["input-border-color"], button_color=self.theme["config-panel"]["input-button-color"], text_color=self.theme["config-panel"]["input-text-color"])
-        self.cnfg_pnl_sv.configure(fg_color=self.theme["config-panel"]["button-fg-color"], hover_color=self.theme["config-panel"]["button-hover-color"], text_color=self.theme["config-panel"]["button-text-color"])
+        self.cnfg_pnl_mn_UI_lbl.configure(fg_color=theme["config-panel"]["title-fg-color"], text_color=theme["config-panel"]["title-text-color"])
+        self.cnfg_pnl_mn_UI_thm_lbl.configure(text_color=theme["config-panel"]["label-text-color"])
+        self.cnfg_pnl_mn_UI_thm_cb.configure(fg_color=theme["config-panel"]["input-fg-color"], border_color=theme["config-panel"]["input-border-color"], button_color=theme["config-panel"]["input-button-color"], text_color=theme["config-panel"]["input-text-color"])
+        self.cnfg_pnl_sv.configure(fg_color=theme["config-panel"]["button-fg-color"], hover_color=theme["config-panel"]["button-hover-color"], text_color=theme["config-panel"]["button-text-color"])
     #event handle
     def change_handler(self):
         if self.form_inpt_isencrptd.get():
@@ -243,7 +223,7 @@ class App(ctk.CTk):
             self.form_inpt_pswrdprtcl.pack_forget()
     def refresh_handler(self):
         self.construct_table()
-        self.apply_theme()
+        self.apply_theme(self.theme)
     def submit_handler(self):
         obj = {}
         obj["id"] = self.form_inpt_id.get()
