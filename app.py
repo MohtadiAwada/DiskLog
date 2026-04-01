@@ -24,7 +24,7 @@ class App(ctk.CTk):
         self.title("External Disks Manager")
         self.iconbitmap(resource_path("icon.ico"))
         self.geometry("950x500")
-        self.resizable(False, False)
+        #self.resizable(False, False)
 
         self.load_config()
         
@@ -115,6 +115,9 @@ class App(ctk.CTk):
                     lbl.grid(row=index, column=0, padx=[12, 6])
                     val = ctk.CTkLabel(sec, text=value) #temp
                     val.grid(row=index, column=1, sticky="w")
+                    btn = ctk.CTkButton(sec, text="✎", width=24)
+                    btn.configure(command=lambda t="Data Entry", s=sec, btn=btn, r=index: self.cnfg_edit_handler(t, s, r, btn))
+                    btn.grid(row=index, column=2, padx=12)
             elif title == "Data Entry":
                 sec = ctk.CTkFrame(main)
                 sec.grid_columnconfigure(2, weight=1)
@@ -126,7 +129,8 @@ class App(ctk.CTk):
                         lbl.pack(side="left", padx=[12, 6])
                         val = ctk.CTkLabel(frame, text=", ".join(value) if isinstance(value, list) else value)
                         val.pack(side="left")
-                    edit = ctk.CTkButton(sec, text="✎", width=24, command=lambda r=row, s=sec: self.config_dataEntry_edit_handler(r, s))
+                    edit = ctk.CTkButton(sec, text="✎", width=24)
+                    edit.configure(command=lambda t="Data Entry", s=sec, btn=edit, r=row: self.cnfg_edit_handler(t, s, r, btn))
                     edit.grid(row=row, column=3, padx=12)
             sec.pack(side="top", fill="x")
         button_frame = ctk.CTkFrame(panel)
@@ -138,31 +142,41 @@ class App(ctk.CTk):
         def construct_row(rowObj:dict, index:int):
             click = lambda e, i=index: self.select_handler(i)
             row = ctk.CTkFrame(table, corner_radius=0)
-            row.pack(side="top")
-            id = ctk.CTkLabel(row, text=rowObj["ID"], corner_radius=0, width=48)
-            ttype = ctk.CTkLabel(row, text=rowObj["Type"], corner_radius=0, width=150)
-            title = ctk.CTkLabel(row, text=rowObj["Title"], corner_radius=0, width=180)
-            description = ctk.CTkLabel(row, text=rowObj["Description"], corner_radius=0, width=400)
-            if(rowObj["isEncrypted"]):
-                enc = ctk.CTkLabel(row, text=f"Encrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0)
-            else:
-                enc = ctk.CTkLabel(row, text="Unlocked", width=148, corner_radius=0,)
-            for e in [id, ttype, title, description, enc]:
-                e.pack(side="left")
-                e.bind("<Button-1>", click)
+            row.pack(side="top", fill="x")
+            for d in self.CONFIG["Data Entry"]:
+                try:
+                    text = rowObj[d["Title"]]
+                except KeyError:
+                    text = ""
+                match d["Type"]:
+                    case "small entry":
+                        td = ctk.CTkLabel(row, text=text, width=12*6)
+                    case "medium entry" | "select":
+                        td = ctk.CTkLabel(row, text=text, width=12*14)
+                    case "large entry":
+                        td = ctk.CTkLabel(row, text=text)
+                        td.pack(side="left", fill="both", expand=True)
+                        td.bind("<Button-1>", click)
+                        continue
+                td.pack(side="left")
+                td.bind("<Button-1>", click)
             rows_widget.append(row)
         rows_widget = []
         for element in table.winfo_children():
             element.destroy()
         thead = ctk.CTkFrame(table, corner_radius=0)
-        thead.pack(side="top")
-        thead_id = ctk.CTkLabel(thead, corner_radius=0, text="ID", width=48)
-        thead_type = ctk.CTkLabel(thead, corner_radius=0, text="Type", width=150)
-        thead_title = ctk.CTkLabel(thead, corner_radius=0, text="Title", width=180)
-        thead_dscrptn = ctk.CTkLabel(thead, corner_radius=0, text="Description", width=400)
-        thead_state = ctk.CTkLabel(thead, corner_radius=0, width=148, text="State")
-        for e in [thead_id, thead_type, thead_title, thead_dscrptn, thead_state]:
-            e.pack(side="left")
+        thead.pack(side="top", fill="x")
+        for tht in self.CONFIG["Data Entry"]:
+            match tht["Type"]:
+                case "small entry":
+                    th = ctk.CTkLabel(thead, text=tht["Title"], width=12*6)
+                case "medium entry" | "select":
+                    th = ctk.CTkLabel(thead, text=tht["Title"], width=12*14)
+                case "large entry":
+                    th = ctk.CTkLabel(thead, text=tht["Title"])
+                    th.pack(side='left', fill='x', expand=True)
+                    continue
+            th.pack(side="left")
         for i, rowObj in enumerate(data):
             construct_row(rowObj, i)
         return rows_widget
@@ -213,10 +227,11 @@ class App(ctk.CTk):
                 e.configure(fg_color=color)
                 for k, chld in enumerate(e.winfo_children()):
                     if k == len(e.winfo_children())-1:
-                        if self.DATA[i-1]["isEncrypted"]:
-                            chld.configure(fg_color=theme["table"]["row-badge-fg-color-true"], text_color=theme["table"]["row-badge-text-color-true"])
-                        else:
-                            chld.configure(fg_color=theme["table"]["row-badge-fg-color-false"], text_color=theme["table"]["row-badge-text-color-false"])
+                        #if self.DATA[i-1]["isEncrypted"]:
+                        #    chld.configure(fg_color=theme["table"]["row-badge-fg-color-true"], text_color=theme["table"]["row-badge-text-color-true"])
+                        #else:
+                        #    chld.configure(fg_color=theme["table"]["row-badge-fg-color-false"], text_color=theme["table"]["row-badge-text-color-false"])
+                        pass
                     else:
                         chld.configure(text_color=theme["table"]["row-text-color"])
         self.form.configure(fg_color=theme["form"]["fg-color"])
@@ -316,40 +331,20 @@ class App(ctk.CTk):
             self.config_panel.place_forget()
         else:
             self.config_panel.place(x=0, y=0, relwidth=1, relheight=1)
-    def config_dataEntry_edit_handler(self, row:int, section:ctk.CTkFrame):
-        button = section.grid_slaves(row=row, column=3)[0]
-        button.configure(text="✓", command=lambda: self.config_dataEntry_submit_handler(row, section))
-        columns = []
-        for c in range(3):
-            slaves = section.grid_slaves(row=row, column=c)
-            if slaves:
-                columns.append(slaves[0])
-        for element in columns:
-            for i, lbl in enumerate(element.winfo_children()):
-                if i == 0:
-                    continue
-                else:
-                    lbl.pack_forget()
-                    change = ctk.CTkEntry(element)
-                    change.insert(0, lbl.cget("text"))
-                    change.pack(side="left")
-    def config_dataEntry_submit_handler(self, row:int, section:ctk.CTkFrame):
-        button = section.grid_slaves(row=row, column=3)[0]
-        button.configure(text="✎", command=lambda: self.config_dataEntry_edit_handler(row, section))
-        columns = []
-        for c in range(3):
-            slaves = section.grid_slaves(row=row, column=c)
-            if slaves:
-                columns.append(slaves[0])
-        for element in columns:
-            children = element.winfo_children()
-            lbl = children[1]   # the label (index 0)
-            entry = children[2] # the entry (index 1, created after pack_forget)
-            if len(children) > 1 and isinstance(children[2], ctk.CTkEntry):
-                lbl.configure(text=entry.get())
-                entry.destroy()
-                lbl.pack(side="left")
-    def error(self, Message):
+    def cnfg_edit_handler(self, title:str, section:ctk.CTkFrame, row_num:int, button:ctk.CTkButton):
+        button.configure(text="✓")
+        row = section.grid_slaves(row=row_num)
+        temp = []
+        for cell in row:
+            if isinstance(cell, ctk.CTkFrame):
+                temp.append({cell.winfo_children()[0].cget("text"): cell.winfo_children()[1].cget("text")})
+        temp.reverse()
+        for cell in row:
+            cell.destroy()
+        for i, lbl in enumerate(temp):
+            pass
+        print(temp)    
+    def error(self, message):
         pass
 
 if __name__ == "__main__":
