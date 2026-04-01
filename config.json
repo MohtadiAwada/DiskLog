@@ -5,15 +5,18 @@
     "Data Entry": [
         {
             "Title": "ID",
-            "Type": "small entry"
+            "Type": "small entry",
+            "Class": "ID"
         },
         {
             "Title": "Title",
-            "Type": "medium entry"
+            "Type": "medium entry",
+            "Class": "String"
         },
         {
             "Title": "Description",
-            "Type": "large entry"
+            "Type": "large entry",
+            "Class": "String"
         },
         {
             "Title": "Type",

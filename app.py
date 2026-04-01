@@ -54,7 +54,7 @@ class App(ctk.CTk):
         self.table.pack(fill="both", expand=True)
         self.form = ctk.CTkFrame(self.main, corner_radius=0)
         self.form.pack(side="bottom", fill="x")
-        #config panel (temp)
+
         self.config_panel = self.construct_configPanel(self.body, self.CONFIG)
 
         self.render_data()
@@ -94,6 +94,7 @@ class App(ctk.CTk):
     def save_data(self):
         with open(self.JSON_FILE, 'w') as f:
             json.dump(self.DATA, f, indent=4)
+        self.render_data()
     def render_data(self):
         self.load_data()
         self.ROWS = self.construct_table(self.table, self.DATA)
@@ -138,10 +139,10 @@ class App(ctk.CTk):
             click = lambda e, i=index: self.select_handler(i)
             row = ctk.CTkFrame(table, corner_radius=0)
             row.pack(side="top")
-            id = ctk.CTkLabel(row, text=rowObj["id"], corner_radius=0, width=48)
-            ttype = ctk.CTkLabel(row, text=rowObj["type"], corner_radius=0, width=150)
-            title = ctk.CTkLabel(row, text=rowObj["title"], corner_radius=0, width=180)
-            description = ctk.CTkLabel(row, text=rowObj["description"], corner_radius=0, width=400)
+            id = ctk.CTkLabel(row, text=rowObj["ID"], corner_radius=0, width=48)
+            ttype = ctk.CTkLabel(row, text=rowObj["Type"], corner_radius=0, width=150)
+            title = ctk.CTkLabel(row, text=rowObj["Title"], corner_radius=0, width=180)
+            description = ctk.CTkLabel(row, text=rowObj["Description"], corner_radius=0, width=400)
             if(rowObj["isEncrypted"]):
                 enc = ctk.CTkLabel(row, text=f"Encrypted ({rowObj["passwordProtocol"]})", width=148, corner_radius=0)
             else:
@@ -181,14 +182,14 @@ class App(ctk.CTk):
                     inpt.pack(side="left", fill="both", expand=True, padx=[12, 0])
                     continue
                 case "select":
-                    inpt = ctk.CTkComboBox(inputs, width=144, values=obj["Values"])
+                    inpt = ctk.CTkComboBox(inputs, width=144, values=obj["Values"], state="readonly")
                     inpt.set(obj["Title"])
                 case _:
                     continue
             inpt.pack(side="left", padx=[12, 0])
         buttons = ctk.CTkFrame(form)
         buttons.pack(fill="x", padx=[0, 12], pady=[0, 12])
-        save_button = ctk.CTkButton(buttons, text="save")
+        save_button = ctk.CTkButton(buttons, text="save", command=self.form_submit_handler)
         clear_button = ctk.CTkButton(buttons, text="clear")
         for btn in [save_button, clear_button]:
             btn.pack(side="left", padx=[12, 0], fill="both", expand=True)
@@ -263,24 +264,31 @@ class App(ctk.CTk):
     def refresh_handler(self):
         self.render_data()
         self.apply_theme(self.theme)
-    def submit_handler(self):
-        obj = {}
-        obj["id"] = self.form_inpt_id.get()
-        obj["title"] = self.form_inpt_ttl.get()
-        obj["type"] = self.form_inpt_type.get()
-        if(not obj["id"] or not obj["title"] or obj["type"] == "Type"):
-            return
-        obj["description"] = self.form_inpt_dscrptn.get() if self.form_inpt_dscrptn.get() else "No Description"
-        if self.form_inpt_isencrptd.get():
-            obj["isEncrypted"] = True
-            obj["passwordProtocol"] = "TP3" if self.form_inpt_pswrdprtcl.get()=="ToPower3" else self.form_inpt_pswrdprtcl.get()
-        else:
-            obj["isEncrypted"] = False
-            obj["passwordProtocol"] = ""
-        self.clear_handler()
-        self.DATA.append(obj)
+    def form_submit_handler(self):
+        inputs = self.form.winfo_children()[0]
+        data_dict = {}
+        for index, input in enumerate(inputs.winfo_children()):
+            if isinstance(input, ctk.CTkEntry):
+                match self.CONFIG["Data Entry"][index]["Class"]:
+                    case "String":
+                        if not input.get():
+                            self.error("missing value")
+                            return
+                    case "ID":
+                        IDs = list(map(lambda obj: obj["ID"], self.DATA))
+                        if input.get() in IDs:
+                            self.error("existing id")
+                            return
+                        elif not input.get().isdigit():
+                            self.error("wrong type")
+                            return
+            elif isinstance(input, ctk.CTkComboBox):
+                if input.get()==self.CONFIG["Data Entry"][index]["Title"]:
+                    self.error("missing value")
+                    return
+            data_dict[self.CONFIG["Data Entry"][index]["Title"]] = input.get()
+        self.DATA.append(data_dict)
         self.save_data()
-        self.refresh_handler()
     def clear_handler(self):
         for input in [self.form_inpt_id, self.form_inpt_ttl, self.form_inpt_dscrptn]:
             input.delete(0, "end")
@@ -341,6 +349,8 @@ class App(ctk.CTk):
                 lbl.configure(text=entry.get())
                 entry.destroy()
                 lbl.pack(side="left")
+    def error(self, Message):
+        pass
 
 if __name__ == "__main__":
     app = App()
