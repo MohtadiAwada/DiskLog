@@ -1,3 +1,33 @@
 {
-    "theme": "Midnight"
+    "Appearance": {
+        "Theme": "Pearl"
+    },
+    "Data Entry": [
+        {
+            "Title": "ID",
+            "Type": "small entry",
+            "Class": "ID"
+        },
+        {
+            "Title": "Title",
+            "Type": "medium entry",
+            "Class": "String"
+        },
+        {
+            "Title": "Description",
+            "Type": "large entry",
+            "Class": "String"
+        },
+        {
+            "Title": "Type",
+            "Type": "select",
+            "Values": [
+                "HDD",
+                "SSD",
+                "NVMe",
+                "Flash Drive",
+                "Memory Card"
+            ]
+        }
+    ]
 }
