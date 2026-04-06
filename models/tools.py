@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from windows.add_popup import addPopup
 
 class ToolTip:
@@ -25,16 +25,17 @@ class ToolTip:
     
 class Tools:
     def __init__(self, parent, store):
+        self.store = store
         self.tools = [
             {
                 "name": "Add",
                 "sign": "\u002B",
-                "command": lambda: addPopup(store)
+                "command": lambda: addPopup(self.store)
             },
             {
                 "name": "Delete",
                 "sign": "\u2715",
-                "command": None
+                "command": self.delete_handler
             },
             {
                 "name": "Edit",
@@ -49,5 +50,14 @@ class Tools:
             btn = tk.Button(self.frame, text=tool["sign"], command=tool["command"])
             btn.pack(side="right")
             ToolTip(btn, tool["name"])
+    def delete_handler(self):
+        if not self.store.selected:
+            messagebox.showwarning("Warning", "No rows selected")
+            return
+        if not messagebox.askyesno("Confirm", f"Delete {len(self.store.selected)} entry?"):
+            return
+        for id_val in self.store.selected:
+            self.store.db.delete(id_val)
+        self.store.table.refresh()
     def pack(self, **kwargs):
         self.frame.pack(**kwargs)
