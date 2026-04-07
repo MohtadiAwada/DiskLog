@@ -207,9 +207,6 @@ marimo/_lsp/
 __marimo__/
 
 /dist
-data.json
-External-Disks-Manager.spec
-untitled.af
-Untitled.png
 /build
-icon.ico
+data.db
+config.json
