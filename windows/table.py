@@ -22,9 +22,9 @@ class Table:
         self.store.table = self
         self.tree.bind("<<TreeviewSelect>>", self.select_handler)
         self.refresh()
-    def refresh(self):
+    def refresh(self, query: str = ""):
         self.tree.delete(*self.tree.get_children())
-        for row in self.store.db.fetch_all():
+        for row in self.store.db.search(query):
             self.tree.insert("", "end", values=row)
     def select_handler(self, event):
         selected = self.tree.selection()

@@ -4,7 +4,9 @@ import re
 
 def make_checkbox(parent, col):
     a = tk.BooleanVar(value=False)
-    return tk.Checkbutton(parent, variable=a)
+    checkbox = tk.Checkbutton(parent, variable=a)
+    checkbox.var = a  # Store variable as widget attribute
+    return checkbox
 field_types = {
     "entry": lambda parent, col: tk.Entry(parent),
     "select": lambda parent, col: ttk.Combobox(parent, values=col["values"], state="readonly"),
@@ -29,9 +31,9 @@ class addPopup:
         self.popup.focus_set()
 
         self.field_widgets = []
-        self.biuld_from()
+        self.build_from()
 
-    def biuld_from(self):
+    def build_from(self):
         for col in self.store.config.get("columns"):
             frame = tk.Frame(self.popup)
             frame.pack(side="top", fill='x', pady=[6, 0], padx=[0, 12])
@@ -50,7 +52,7 @@ class addPopup:
         data = {}
         for widget, col in zip(self.field_widgets, self.store.config.get("columns")):
             if isinstance(widget, tk.Checkbutton):
-                data[col["title"]] = int(widget.getvar(widget["variable"]))
+                data[col["title"]] = int(widget.var.get())
             else:
                 data[col["title"]] = widget.get()
         
