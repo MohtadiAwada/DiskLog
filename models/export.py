@@ -7,6 +7,7 @@ from pathlib import Path
 
 class Export:
     def __init__(self, store):
+        self.store = store
         messagebox.showinfo("Export Visible Data", "Only the visible data in the table will be exported.")
         self.popup = tk.Toplevel()
         #self.popup.geometry("200x200")
@@ -40,7 +41,7 @@ class Export:
         type_frame.pack(side="top", fill="x", padx=14, pady=[0, 6])
         tk.Label(type_frame, text="Export to:").pack(side="left", padx=[0, 6])
         self.file_type = ttk.Combobox(type_frame, values=["Table Sheet", "Database File"], state="readonly")
-        self.file_type.set("Table Sheets")
+        self.file_type.set("Table Sheet")
         self.file_type.pack(side="left")
         tk.Frame(self.popup, height=1, bg="#CCCCCC").pack(side="top", fill="x", padx=12)
         tk.Button(self.popup, text="Export", command=self.handle_save).pack(side="top", fill="x", expand=True, padx=14, pady=[6, 0])
@@ -56,11 +57,32 @@ class Export:
             if not input.get():
                 messagebox.showwarning("Unvalid Input", "All fields are required.")
                 return
-        self.file_path = self.file_location.get()
-        if not os.path.exists(self.file_path):
+        if not os.path.exists(self.file_location.get()):
             messagebox.showwarning("Unvalid File Location", "the directory doesn't exits. please enter a valid path")
             return
+        self.file_path = os.path.join(self.file_location.get(), self.file_name.get())
+        if Path(self.file_path).exists():
+            if not messagebox.askyesno("File Exits", "this file already exists.\nDo you want to replace it."):
+                return
+        data = []
+        all_table = self.store.table.tree.get_children()
+        fieldnames = [col["title"] for col in self.store.config.get("columns")]
+        for item in all_table:
+            row = {}
+            for key, value in zip(fieldnames, self.store.table.tree.item(item)['values']):
+                row[key] = value
+            data.append(row)
+        if self.file_type.get() == "Table Sheet":
+            self.export_csv(fieldnames, data)
+        else:
+            self.export_db(fieldnames, data)
+        self.popup.destroy()
 
-        
-    
-    
+    def export_csv(self, fieldnames, data):
+        with open(self.file_path + ".csv", mode="w", newline="") as exp_file:
+            writer = csv.DictWriter(exp_file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(data)
+
+    def export_db(self, fieldnames, data):
+        conn = sqlite3.connect(self.file_path + ".db")
