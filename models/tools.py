@@ -11,15 +11,54 @@ class ToolTip:
         widget.bind("<Enter>", self.show)
         widget.bind("<Leave>", self.hide)
 
-    def show(self, event):
-        x = self.widget.winfo_rootx() - 20
-        y = self.widget.winfo_rooty() + 20
+    def show(self, event=None):
+        if self.tooltip:
+            return
+        
+        # Create a temporary hidden window to calculate required size
         self.tooltip = tk.Toplevel(self.widget)
         self.tooltip.wm_overrideredirect(True)
-        self.tooltip.wm_geometry(f"+{x}+{y}")
-        tk.Label(self.tooltip, text=self.text, padx=6, pady=3).pack()
+        self.tooltip.withdraw() 
+        
+        lbl = tk.Label(self.tooltip, text=self.text, padx=6, pady=3)
+        lbl.pack()
+        
+        # Force geometry calculation
+        self.tooltip.update_idletasks()
+        
+        tip_width = self.tooltip.winfo_reqwidth()
+        tip_height = self.tooltip.winfo_reqheight()
+        
+        # Get widget dimensions and position
+        w_x = self.widget.winfo_rootx()
+        w_y = self.widget.winfo_rooty()
+        w_width = self.widget.winfo_width()
+        w_height = self.widget.winfo_height()
 
-    def hide(self, event):
+        # Calculate X: Center the tooltip horizontally relative to the widget
+        x = w_x + (w_width // 2) - (tip_width // 2)
+        
+        # Calculate Y: Default to appearing UNDER the widget
+        y = w_y + w_height + 2
+        
+        # Screen constraints
+        screen_width = self.widget.winfo_screenwidth()
+        screen_height = self.widget.winfo_screenheight()
+        
+        # Boundary Check - Horizontal (Keep it on screen)
+        if x < 0:
+            x = 0
+        elif x + tip_width > screen_width:
+            x = screen_width - tip_width
+
+        # Boundary Check - Vertical (Flip ABOVE if it goes off bottom)
+        if y + tip_height > screen_height:
+            y = w_y - tip_height - 2
+
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+        self.tooltip.deiconify()
+
+    def hide(self, event=None):
         if self.tooltip:
             self.tooltip.destroy()
             self.tooltip = None
