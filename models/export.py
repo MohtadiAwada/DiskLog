@@ -95,11 +95,11 @@ class Export:
             return
         self.file_path = os.path.join(self.file_location.get(), self.file_name.get())
         data = []
-        all_table = self.store.table.tree.get_children()
+        all_table = self.store.data_table.table.get_children()
         fieldnames = [col["title"] for col in self.store.config.get("columns")]
         for item in all_table:
             row = {}
-            for key, value in zip(fieldnames, self.store.table.tree.item(item)['values']):
+            for key, value in zip(fieldnames, self.store.data_table.table.item(item)['values']):
                 row[key] = value
             data.append(row)
         if self.file_type.get() == "Spreadsheet":

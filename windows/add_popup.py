@@ -61,7 +61,7 @@ class addPopup:
             messagebox.showerror("Error", error)
             return
         self.store.db.insert(data)
-        self.store.table.refresh()
+        self.store.data_table.refresh(self.store.db.search(""))
         self.popup.destroy()
     def validate(self, data: dict) -> str | None:
         for col in self.store.config.get("columns"):

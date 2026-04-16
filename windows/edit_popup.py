@@ -14,14 +14,14 @@ field_types = {
 class editPopup:
     def __init__(self, store):
         self.store = store
-        self.selected = self.store.selected
-        self.row = self.store.db.fetch_one(self.selected[0])
-        if not self.store.selected:
+        self.selected = self.store.data_table.get_selected()
+        if not self.store.data_table.get_selected():
             messagebox.showwarning("Warning", "No rows selected")
             return
-        elif len(self.store.selected) > 1:
+        elif len(self.store.data_table.get_selected()) > 1:
             messagebox.showwarning("Warning", "Select only one row to edit")
             return
+        self.row = self.store.db.fetch_one(self.selected[0])
         self.popup = tk.Toplevel()
         self.popup.title("Edit Disk")
         self.popup.update_idletasks()
@@ -76,7 +76,7 @@ class editPopup:
             messagebox.showerror("Error", error)
             return
         self.store.db.update(data, self.selected[0])
-        self.store.table.refresh()
+        self.store.data_table.refresh(self.store.db.search(""))
         self.popup.destroy()
     def validate(self, data: dict) -> str | None:
         for i, col in enumerate(self.store.config.get("columns")):

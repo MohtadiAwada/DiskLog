@@ -26,7 +26,7 @@ class MainWindow:
         self.search.pack(side="left", fill="both", expand=True)
         tk.Label(self.search, text="Search:").pack(side="left", padx=[6, 6])
         self.search_var = tk.StringVar()
-        self.search_var.trace("w", lambda *args: self.table.refresh(self.search_var.get()))
+        self.search_var.trace("w", lambda *args: self.store.data_table.refresh(self.store.db.search(self.search_var.get())))
         self.search_bar = tk.Entry(self.search, textvariable=self.search_var)
         self.search_bar.pack(side="left", fill="x", expand=True, padx=[0, 6])
         tk.Frame(self.head, width=1, bg="#CCCCCC").pack(side="left", fill="y", padx=6)
@@ -35,8 +35,8 @@ class MainWindow:
         
         tk.Frame(self.root, height=1, bg="#CCCCCC").pack(side="top", fill="x", padx=12)
 
-        self.table = Table(self.root, self.store)
-        self.table.pack(side="top", fill="both", expand=True, padx=[14, 0], pady=[6, 6])
+        self.store.data_table = Table(self.root, self.store.data_columns, self.store.db.search(""), self.store)
+        self.store.data_table.pack(side="top", fill="both", expand=True, padx=[14, 0], pady=[6, 6])
         self.table_tools = tk.Frame(self.root)
         self.table_tools.pack(side="top", fill="x")
         self.table_export = tk.Button(self.table_tools, text="\u2B76", command=lambda: Export(self.store))

@@ -91,13 +91,13 @@ class Tools:
             btn.pack(side="right", padx=[6, 0])
             ToolTip(btn, tool["name"])
     def delete_handler(self):
-        if not self.store.selected:
+        if not self.store.data_table.get_selected():
             messagebox.showwarning("Warning", "No rows selected")
             return
-        if not messagebox.askyesno("Confirm", f"Delete {len(self.store.selected)} entry?"):
+        if not messagebox.askyesno("Confirm", f"Delete {len(self.store.data_table.get_selected())} entry?"):
             return
-        for id_val in self.store.selected:
+        for id_val in self.store.data_table.get_selected():
             self.store.db.delete(id_val)
-        self.store.table.refresh()
+        self.store.data_table.refresh(self.store.db.search(""))
     def pack(self, **kwargs):
         self.frame.pack(**kwargs)
